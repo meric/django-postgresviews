@@ -10,7 +10,7 @@
 
 ## Installation
 
-`pip install https://github.com/meric/django-postgresviews.git`
+`pip install -e "git+git@github.com:meric/django-postgresviews.git#egg=postgresviews"`
 
 Add to `INSTALLED_APPS` in settings.py:
 
@@ -304,3 +304,7 @@ table.
 
 The refresh is executed once, no matter how many rows were affected. It uses
 a technique described [here](https://www.postgresql.org/message-id/CADbMkNNagpOQ6fLHcABt4j9xG0u6-4GL2zrqVntspvZGGMKZkA%40mail.gmail.com).
+
+## See also
+
+This library is alpha software. You might want to look at [mypebble/django-pgviews](https://github.com/mypebble/django-pgviews).
