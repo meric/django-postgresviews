@@ -141,6 +141,10 @@ of a transaction involving one of these operations.
    change it.
 10. At any time you can run `python manage.py createviews --validate` to list
    any models missing from `from_models`.
+11. Be sure to use `django.test.TransactionTestCase` instead of the usual
+    `TestCase` class because the latter does everything in one transaction
+    for each test, so the triggers won't get called after an
+    insert/update/delete operation until the end of the test.
 
 The `MaterializedView` class uses `from_models` to determine what underlying
 tables to create triggers for.
