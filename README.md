@@ -102,10 +102,10 @@ cgt.Split.ViewMeta.from_models might be missing the following models: cgt.UserSp
 
 A PostgreSQL Materialized view is a view whose results are cached in a table
 managed by postgres, and the table only updates when
-`REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] name` is called.
+[`REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] name`](https://www.postgresql.org/docs/9.4/static/sql-refreshmaterializedview.html) is called.
 
-django_postgresviews allows you to implement models that are backed by
-materialized views. In addition, you can configure django_postgresviews to
+django-postgresviews allows you to implement models that are backed by
+materialized views. In addition, you can configure django-postgresviews to
 automatically create the PostgreSQL triggers to update the materialized view
 whenever an INSERT, UPDATE, or DELETE is performed on the table. The refresh
 is NOT performed on each row inserted, updated, or deleted, but only at the end
@@ -120,10 +120,10 @@ of a transaction involving one of these operations.
    instead of the model label. Add any PostgreSQL table names the view selects
    from, even if they do not map to an existing Django model.
 4. Set `ViewMeta.refresh_automatically` to `True` or `False`, depending on
-   whether you want django_postgresviews to update the materialized view
+   whether you want django-postgresviews to update the materialized view
    automatically. (Default: `True`) If `ViewMeta.refresh_automatically` is
    `True`, then all materialized views it selects from must have their
-   `ViewMeta.refresh_automatically` set to `True` also. django_postgresviews
+   `ViewMeta.refresh_automatically` set to `True` also. django-postgresviews
    will take care to refresh materialized views in the correct ordering.
 5. A PostgreSQL materialized view, when being refreshed, locks the table to
    prevent reads until the view is refreshed completely. To avoid this,
