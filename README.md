@@ -26,7 +26,8 @@ INSTALLED_APPS = (
 ### Normal View
 
 1. Extend the model with `postgresviews.View` class.
-2. Define a class method with signature `view(cls)` which returns the SQL view.
+2. Define a class method with signature `view(cls)` which returns the SQL for
+   the view.
 3. The column names selected by the SQL should match the corresponding
    django field.
 3. Create a `ViewMeta` class, with a `from_models` attribute, which lists the
@@ -112,32 +113,33 @@ is NOT performed on each row inserted, updated, or deleted, but only at the end
 of a transaction involving one of these operations.
 
 1. Extend the model with `postgresviews.MaterializedView` class.
-2. Define a class method with signature `view(cls)` which returns the SQL view.
-3. The column names selected by the SQL should match the corresponding
+2. Define a class method with signature `view(cls)` which returns the SQL for
+   the view.
+4. The column names selected by the SQL should match the corresponding
    django field.
-3. Create a `ViewMeta` class, with a `from_models` attribute, which lists the
+5. Create a `ViewMeta` class, with a `from_models` attribute, which lists the
    models the view selects from. You can enter the `model._meta.db_table`
    instead of the model label. Add any PostgreSQL table names the view selects
    from, even if they do not map to an existing Django model.
-4. Set `ViewMeta.refresh_automatically` to `True` or `False`, depending on
+6. Set `ViewMeta.refresh_automatically` to `True` or `False`, depending on
    whether you want django-postgresviews to update the materialized view
    automatically. (Default: `True`) If `ViewMeta.refresh_automatically` is
    `True`, then all materialized views it selects from must have their
    `ViewMeta.refresh_automatically` set to `True` also. django-postgresviews
    will take care to refresh materialized views in the correct ordering.
-5. A PostgreSQL materialized view, when being refreshed, locks the table to
+7. A PostgreSQL materialized view, when being refreshed, locks the table to
    prevent reads until the view is refreshed completely. To avoid this,
    `REFRESH MATERIALIZED VIEW CONCURRENTLY` can be run instead. However, this
    requires the view to have a unique index. You can specify the unique index
    using [Meta.unique_together](https://docs.djangoproject.com/en/1.11/ref/models/options/#unique-together)
    as normal. The automatic refresh will then be done concurrently.
-6. At any time you can perform a manual refresh of a materialized view by
+8. At any time you can perform a manual refresh of a materialized view by
    calling `view_model.refresh(concurrently=True)`. Note that if you try to
    refresh a materialized view concurrently with a unique_together, PostgreSQL
    will raise an exception.
-7. Run `python manage.py createviews --force` to install the view everytime you
+9. Run `python manage.py createviews --force` to install the view everytime you
    change it.
-8. At any time you can run `python manage.py createviews --validate` to list
+10. At any time you can run `python manage.py createviews --validate` to list
    any models missing from `from_models`.
 
 The `MaterializedView` class uses `from_models` to determine what underlying
