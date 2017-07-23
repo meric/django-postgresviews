@@ -158,7 +158,7 @@ former matches the from_code of the latter. This following materialized view
 uses recursive queries to achieve this.
 
 ```
-from postgresview.models import MaterializedView
+from postgresviews.models import MaterializedView
 
 class AggregateCodeChange(MaterializedView, AbstractUserCodeChange):
     class ViewMeta:

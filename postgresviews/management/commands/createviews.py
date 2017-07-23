@@ -4,7 +4,7 @@ from django.db import connection
 
 from django.apps import apps
 
-from postgresview.models import ViewBase, MaterializedViewBase
+from postgresviews.models import ViewBase, MaterializedViewBase
 
 
 
@@ -31,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         validate = options.get('validate', False)
         force = options.get('force', False)
-        app_config = apps.get_app_config('postgresview')
+        app_config = apps.get_app_config('postgresviews')
         tables = {
             model._meta.db_table: model for model in apps.get_models()
         }

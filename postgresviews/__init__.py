@@ -6,7 +6,7 @@ from django.db.models.signals import pre_migrate, post_migrate
 
 default_app_config = 'postgresviews.ViewConfig'
 
-logger = logging.getLogger('postgresview')
+logger = logging.getLogger('postgresviews')
 
 class ViewConfig(AppConfig):
     name = 'postgresviews'

@@ -4,7 +4,7 @@ from django.db import connection
 
 from django.apps import apps
 
-from postgresview.models import ViewBase, MaterializedViewBase
+from postgresviews.models import ViewBase, MaterializedViewBase
 
 
 
