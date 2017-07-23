@@ -50,11 +50,14 @@ class ViewConfig(AppConfig):
 
 
 def create_views():
-    from .models import ViewBase, MaterializedViewBase
+    from .models import ViewBase, MaterializedViewBase, View
+    from django.apps import apps
+
 
     with connection.cursor() as cursor:
+        created = set()
         for model in ViewBase.view_models:
-            model._create_view(cursor)
+            model._create_view(cursor, created)
 
         for view_model in MaterializedViewBase.materialized_view_models:
             view_model.refresh()

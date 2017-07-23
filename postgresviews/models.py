@@ -34,6 +34,10 @@ class ViewBase(type(models.Model)):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self._meta.abstract:
+            self._add_view_model()
+
+    def _add_view_model(self):
+        if self not in ViewBase.view_models:
             ViewBase.view_models.append(self)
 
     def _drop_table_sql(self):
@@ -65,14 +69,42 @@ class ViewBase(type(models.Model)):
         setattr(self._view_meta, "from_tables", from_tables)
         return from_tables
 
+    def _from_view_models(self):
+        if hasattr(self._view_meta, "from_view_models"):
+            return self._view_meta.from_view_models
+        tables = {
+            model._meta.db_table: model for model in apps.get_models()
+        }
+        from_models = self._view_meta.from_models
+        from_view_models = set()
+        for label in from_models:
+            if "." in label:
+                app_label, model_name = label.split(".")
+                model = apps.get_model(app_label=app_label, model_name=model_name)
+                if issubclass(model, View):
+                    from_view_models.add(model)
+            else:
+                model = tables[label]
+                if issubclass(model, View):
+                    from_view_models.add(model)
+        setattr(self._view_meta, "from_view_models", from_view_models)
+        return from_view_models
+
     def _drop_view(self, cursor):
         try:
             cursor.execute(self._drop_view_sql())
         except ProgrammingError:
             cursor.execute(self._drop_table_sql())
 
-    def _create_view(self, cursor):
+    def _create_view(self, cursor, created):
+        if self in created:
+            return
+        created.add(self)
+        for view_model in self._from_view_models():
+            view_model._create_view(cursor, created)
         cursor.execute(self._create_view_sql())
+        return True
+
 
 
 class View(models.Model, metaclass=ViewBase):
@@ -134,61 +166,62 @@ class MaterializedViewBase(ViewBase):
         if model not in MaterializedViewBase.materialized_view_models:
             MaterializedViewBase.materialized_view_models.append(model)
 
-    def _create_view(self, cursor):
-        super()._create_view(cursor)
-        if self._meta.unique_together:
-            for unique_together in self._meta.unique_together:
-                columns = [self._meta.get_field(field).column
-                    for field in unique_together]
-                cursor.execute(self._create_unique_sql(columns))
+    def _create_view(self, cursor, created):
+        if super()._create_view(cursor, created):
+            if self._meta.unique_together:
+                for unique_together in self._meta.unique_together:
+                    columns = [self._meta.get_field(field).column
+                        for field in unique_together]
+                    cursor.execute(self._create_unique_sql(columns))
 
-        from_models = self._view_meta.from_models
+            from_models = self._view_meta.from_models
 
-        for label in from_models:
-            if "." in label:
-                app_label, model_name = label.split(".")
-                model = apps.get_model(
-                    app_label=app_label,
-                    model_name=model_name)
-                if issubclass(model, MaterializedView):
-                    for from_table in model._from_tables():
-                        self._add_materialized_view_model(model)
+            for label in from_models:
+                if "." in label:
+                    app_label, model_name = label.split(".")
+                    model = apps.get_model(
+                        app_label=app_label,
+                        model_name=model_name)
+                    if issubclass(model, MaterializedView):
+                        for from_table in model._from_tables():
+                            self._add_materialized_view_model(model)
+                            self._add_materialized_view_model(self)
+                    else:
                         self._add_materialized_view_model(self)
                 else:
                     self._add_materialized_view_model(self)
-            else:
-                self._add_materialized_view_model(self)
 
-        if self._view_meta.refresh_automatically:
-            # Add list of materialized views to refresh for each table.
-            # Keep an ordering such that materialized views used by other
-            # materialized views are refreshed first.
-            # There is much probably a much more optimal algorithm.
-            # If it gets slow as the number of materialized views grow,
-            # look here; But for half a dozen materialized views, the slowness
-            # should not be noticeable.
-            for label in from_models:
-                if "." in label:
-                    app_label, model_name = label.split(".")
-                    model = apps.get_model(
-                        app_label=app_label,
-                        model_name=model_name)
-                    if issubclass(model, MaterializedView):
-                        for from_table in model._from_tables():
-                            self._add_refresh_for_view(from_table, model)
-                    elif not issubclass(model, View):
-                        self._add_refresh_for_view(model._meta.db_table, self)
-                else:
-                    self._add_refresh_for_view(label, self)
-            for label in from_models:
-                if "." in label:
-                    app_label, model_name = label.split(".")
-                    model = apps.get_model(
-                        app_label=app_label,
-                        model_name=model_name)
-                    if issubclass(model, MaterializedView):
-                        for from_table in model._from_tables():
-                            self._add_refresh_for_view(from_table, self)
+            if self._view_meta.refresh_automatically:
+                # Add list of materialized views to refresh for each table.
+                # Keep an ordering such that materialized views used by other
+                # materialized views are refreshed first.
+                # There is much probably a much more optimal algorithm.
+                # If it gets slow as the number of materialized views grow,
+                # look here; But for half a dozen materialized views, the slowness
+                # should not be noticeable.
+                for label in from_models:
+                    if "." in label:
+                        app_label, model_name = label.split(".")
+                        model = apps.get_model(
+                            app_label=app_label,
+                            model_name=model_name)
+                        if issubclass(model, MaterializedView):
+                            for from_table in model._from_tables():
+                                self._add_refresh_for_view(from_table, model)
+                        elif not issubclass(model, View):
+                            self._add_refresh_for_view(model._meta.db_table, self)
+                    else:
+                        self._add_refresh_for_view(label, self)
+                for label in from_models:
+                    if "." in label:
+                        app_label, model_name = label.split(".")
+                        model = apps.get_model(
+                            app_label=app_label,
+                            model_name=model_name)
+                        if issubclass(model, MaterializedView):
+                            for from_table in model._from_tables():
+                                self._add_refresh_for_view(from_table, self)
+            return True
 
     @classmethod
     def _refresh_materialized_view_sql(cls, view_models):
