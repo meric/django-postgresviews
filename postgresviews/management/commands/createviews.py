@@ -5,7 +5,7 @@ from django.db import connection
 from django.apps import apps
 
 from postgresviews.models import ViewBase, MaterializedViewBase
-
+from postgresviews import create_views, drop_views
 
 
 class Command(BaseCommand):
@@ -42,15 +42,7 @@ class Command(BaseCommand):
         if validate:
             return
 
-        with connection.cursor() as cursor:
-            for model in ViewBase.view_models:
-                if force:
-                    model._drop_view(cursor)
-                model._create_view(cursor)
+        if force:
+            drop_views()
 
-            for view_model in MaterializedViewBase.materialized_view_models:
-                view_model.refresh()
-
-            for from_table, view_models in MaterializedViewBase.refresh_triggers.items():
-                cursor.execute(MaterializedViewBase._create_refresh_table_sql(from_table, view_models))
-                cursor.execute(MaterializedViewBase._create_constraint_trigger_sql(from_table))
+        create_views()

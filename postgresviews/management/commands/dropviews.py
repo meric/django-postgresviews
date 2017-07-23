@@ -1,11 +1,7 @@
 from django.core.management.base import BaseCommand
-from django.core.files import File
 from django.db import connection
 
-from django.apps import apps
-
-from postgresviews.models import ViewBase, MaterializedViewBase
-
+from postgresviews import drop_views
 
 
 class Command(BaseCommand):
@@ -15,6 +11,4 @@ class Command(BaseCommand):
 """
 
     def handle(self, *args, **options):
-        with connection.cursor() as cursor:
-            for model in ViewBase.view_models:
-                model._drop_view(cursor)
+        drop_views()

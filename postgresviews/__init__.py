@@ -3,10 +3,12 @@ import logging
 
 from django.apps import AppConfig
 from django.db.models.signals import pre_migrate, post_migrate
+from django.db import connection
 
 default_app_config = 'postgresviews.ViewConfig'
 
 logger = logging.getLogger('postgresviews')
+
 
 class ViewConfig(AppConfig):
     name = 'postgresviews'
@@ -45,3 +47,26 @@ class ViewConfig(AppConfig):
                 view_model._meta.label,
                 ", ".join(labels),
                 str(list(sorted(from_models + labels)))))
+
+
+def create_views():
+    from .models import ViewBase, MaterializedViewBase
+
+    with connection.cursor() as cursor:
+        for model in ViewBase.view_models:
+            model._create_view(cursor)
+
+        for view_model in MaterializedViewBase.materialized_view_models:
+            view_model.refresh()
+
+        for from_table, view_models in MaterializedViewBase.refresh_triggers.items():
+            cursor.execute(MaterializedViewBase._create_refresh_table_sql(from_table, view_models))
+            cursor.execute(MaterializedViewBase._create_constraint_trigger_sql(from_table))
+
+
+def drop_views():
+    from .models import ViewBase
+
+    with connection.cursor() as cursor:
+        for model in ViewBase.view_models:
+            model._drop_view(cursor)
