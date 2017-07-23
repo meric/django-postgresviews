@@ -4,13 +4,13 @@ import logging
 from django.apps import AppConfig
 from django.db.models.signals import pre_migrate, post_migrate
 
-default_app_config = 'postgresview.ViewConfig'
+default_app_config = 'postgresviews.ViewConfig'
 
 logger = logging.getLogger('postgresview')
 
 class ViewConfig(AppConfig):
-    name = 'postgresview'
-    verbose_name = 'postgresview'
+    name = 'postgresviews'
+    verbose_name = 'postgresviews'
 
     def ready(self):
         from .models import ViewBase, MaterializedViewBase
