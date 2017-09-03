@@ -10,7 +10,7 @@
 
 ## Installation
 
-`pip install -e "git+git@github.com:meric/django-postgresviews.git#egg=postgresviews"`
+`pip install -e "git+https://github.com/meric/django-postgresviews.git#egg=postgresviews"`
 
 Add to `INSTALLED_APPS` in settings.py:
 
