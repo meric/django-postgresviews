@@ -7,10 +7,9 @@ from django.utils.encoding import force_bytes
 
 from django.db.utils import ProgrammingError
 
-from aldjemy.core import get_meta
 from aldjemy.orm import get_session
 
-from sqlalchemy import Table
+from sqlalchemy import Table, MetaData
 from sqlalchemy_views import CreateView, DropView
 
 
@@ -59,8 +58,8 @@ class ViewBase(type(models.Model)):
             return sql
 
         return CreateView(
-            Table(self._meta.db_table, get_meta()),
-            sql.subquery(),
+            Table(self._meta.db_table, MetaData()),
+            self.view().subquery(),
             or_replace=True)
 
     def _from_tables(self):
