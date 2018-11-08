@@ -32,7 +32,7 @@ class ViewConfig(AppConfig):
         missing = []
 
         for table, model in tables.items():
-            if (re.search(table + "[^_a-zA-Z0-9]", create_view_sql)
+            if (re.search(table + "[^_a-zA-Z0-9]", str(create_view_sql))
                     and table != view_model._meta.db_table):
                 _meta = model._meta
                 if (_meta.label not in from_models

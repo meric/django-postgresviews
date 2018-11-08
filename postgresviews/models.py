@@ -7,6 +7,12 @@ from django.utils.encoding import force_bytes
 
 from django.db.utils import ProgrammingError
 
+from aldjemy.core import get_meta
+from aldjemy.orm import get_session
+
+from sqlalchemy import Table
+from sqlalchemy_views import CreateView, DropView
+
 
 class ViewOptions(object):
     from_models = []
@@ -47,7 +53,15 @@ class ViewBase(type(models.Model)):
         return "DROP VIEW IF EXISTS %s CASCADE" % self._meta.db_table
 
     def _create_view_sql(self):
-        return "CREATE VIEW %s AS %s" % (self._meta.db_table, self.view())
+        sql = self.view()
+
+        if isinstance(sql, str):
+            return sql
+
+        return CreateView(
+            Table(self._meta.db_table, get_meta()),
+            sql.subquery(),
+            or_replace=True)
 
     def _from_tables(self):
         if hasattr(self._view_meta, "from_tables"):
@@ -102,9 +116,16 @@ class ViewBase(type(models.Model)):
         created.add(self)
         for view_model in self._from_view_models():
             view_model._create_view(cursor, created)
-        cursor.execute(self._create_view_sql())
-        return True
 
+        sql = self._create_view_sql()
+
+        if isinstance(sql, str):
+            cursor.execute(sql)
+        else:
+            session = get_session()
+            session.execute(sql)
+
+        return True
 
 
 class View(models.Model, metaclass=ViewBase):
