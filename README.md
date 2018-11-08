@@ -90,6 +90,45 @@ FROM (
 """
 ```
 
+*`view(cls)` can also return an SQLAlchemy query. For example.*
+
+```
+@classmethod
+def view(cls):
+    fields = list(reversed(sorted(
+        [field.name for field in cls._meta.fields])))
+
+    account_code_change_fields = [
+        getattr(AccountCodeChange.sa, field).label(field)
+            for field in fields]
+    default_code_change_fields = [
+        getattr(DefaultCodeChange.sa, field,
+            sqlalchemy.null().label(field))
+                for field in fields]
+
+    account_code_changes = AccountCodeChange.sa.query().with_entities(
+            *account_code_change_fields)
+
+    default_code_changes = DefaultCodeChange.sa.query().with_entities(
+            *default_code_change_fields) \
+        .outerjoin(
+            AccountCodeChange.sa,
+            and_(
+                DefaultCodeChange.sa.exchange ==
+                    AccountCodeChange.sa.exchange,
+                DefaultCodeChange.sa.changed ==
+                    AccountCodeChange.sa.changed,
+                or_(
+                    DefaultCodeChange.sa.code ==
+                        AccountCodeChange.sa.code,
+                    DefaultCodeChange.sa.code_to ==
+                        AccountCodeChange.sa.code_to)))\
+        .filter(AccountCodeChange.sa.id == None)
+
+    return account_code_changes.union_all(default_code_changes)
+```
+
+
 If the `ViewMeta.from_models` is missing, a warning message will be logged when
 django starts, but if you really know what you are doing, postgresviews will
 continue to operate:
