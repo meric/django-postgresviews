@@ -5,8 +5,8 @@
 
 ## Requirements
 
-* Python 3
-* Django 1.11
+* Python 3.7
+* Django 2
 
 ## Installation
 

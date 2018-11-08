@@ -9,7 +9,7 @@ except:
 
 setup(
     name='django-postgresviews',
-    version='0.0.2',
+    version='0.0.3',
     description="Define PostgreSQL Views with Django models.",
     long_description=LONG_DESCRIPTION,
     author='Eric Man',
@@ -22,7 +22,6 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Framework :: Django',
-        'Framework :: Django :: 1.11',
     ],
     install_requires=[
         'aldjemy==0.8.0',

@@ -17,3 +17,8 @@ Changelog
 * Add SQLAlchemy and aldjemy as a dependency.
 * Set Python 3.7 as the minimum supported Python version.
 * Started this changelog.
+
+0.0.3
+-----
+
+* Fix view SQL projection to Django model fields mismatch bug.
